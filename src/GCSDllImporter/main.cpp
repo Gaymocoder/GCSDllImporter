@@ -1,3 +1,5 @@
+#include "GCSDllImporter/resourceMonitor.h"
+
 #include <windows.h>
 #include <iostream>
 #include <filesystem>
@@ -10,7 +12,7 @@ int main(int argc, char** argv)
 {
     if (argc < 2)
     {
-        fprintf(stderr, "Usage: %s <path-to-PE-file>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <path-to-EXE-file>\n", argv[0]);
         return 1;
     }
 
@@ -19,7 +21,7 @@ int main(int argc, char** argv)
     {
         fullAppPath = FS::canonical(argv[1]);
     }
-    catch(FS::filesystem_error)
+    catch(FS::filesystem_error &err)
     {
         fprintf(stderr, "Invalid path has been requested:\nFile \"%s\" not found\n", fullAppPath.string().c_str());
         return 1;
@@ -31,23 +33,5 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-
-    ZeroMemory(&si, sizeof(si));
-    ZeroMemory(&pi, sizeof(pi));
-    si.cb = sizeof(si);
-    
-    BOOL success = CreateProcessA(fullAppPath.string().c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
-
-    if (success)
-    {
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
-    }
-    else
-    {
-        printf("Failed to create process. Error code: %d\n", GetLastError());
-    }
+    bool success = launchApp(fullAppPath, NULL, NULL);
 }
