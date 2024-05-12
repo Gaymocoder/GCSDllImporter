@@ -37,23 +37,19 @@ std::vector <FS::path> getProcessUsedModules(uint32_t processID)
     std::vector <FS::path> _return;
     MODULEENTRY32 moduleEntry;
     moduleEntry.dwSize = sizeof(MODULEENTRY32);
-
     HANDLE prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
     if (prSnapshot == INVALID_HANDLE_VALUE)
     {
         fprintf(stderr, "Failed to create snapshot of the process %u modules. Error code: %lu\n", processID, GetLastError());
         return _return;
     }
-
+    
     BOOL moduleFetched = Module32First(prSnapshot, &moduleEntry);
-    if (!moduleFetched)
-    {
+    for (; moduleFetched; moduleFetched = Module32Next(prSnapshot, &moduleEntry))
+        _return.push_back(moduleEntry.szExePath);
+    
+    if (!_return.size())
         fprintf(stderr, "Can't get the first module, used by the process %u\nError code: %lu\n", processID, GetLastError());
-        return _return;
-    }
-    for (int i = 1; moduleFetched; moduleFetched = Module32Next(prSnapshot, &moduleEntry))
-        fprintf(stderr, "Used module #%u: %s\n", i++, moduleEntry.szExePath);
-    fprintf(stderr, "\n");
 
     return _return;
 }
@@ -80,23 +76,30 @@ bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
     si->cb = sizeof(*si);
     
     BOOL success = CreateProcessA(path.string().c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, si, pi);
+    std::this_thread::sleep_for(100ms);
     
-    if (success)
-    {
-        while (isProcessActive(pi->hProcess))
-        {
-            getProcessUsedModules(pi->dwProcessId);
-            std::this_thread::sleep_for(500ms);
-        }
-        if (local_pi) free(pi);
-        if (local_si) free(si);
-        return true;
-    }
-    else
+    if (!success)
     {
         fprintf(stderr, "Failed to create process. Error code: %lu\n", GetLastError());
         if (local_pi) free(pi);
         if (local_si) free(si);
         return false;
     }
+
+    while (isProcessActive(pi->hProcess))
+    {
+        system("cls");
+        fprintf(stderr, "List of modules, loaded by process %lu:\n", pi->dwProcessId);
+        std::vector <FS::path> modules = getProcessUsedModules(pi->dwProcessId);
+        for(size_t i = 0, len = modules.size(); i < len; ++i)
+            fprintf(stderr, "Module %3lli: %s\n", i+1, modules[i].string().c_str());
+        fprintf(stderr, "\n")
+        std::this_thread::sleep_for(500ms);
+    }
+    
+    CloseHandle(pi->hProcess);
+    CloseHandle(pi->hThread);
+    if (local_pi) free(pi);
+    if (local_si) free(si);
+    return true;
 }
