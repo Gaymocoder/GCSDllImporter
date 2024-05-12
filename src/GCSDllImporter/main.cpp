@@ -1,12 +1,8 @@
 #include "GCSDllImporter/resourceMonitor.h"
 
-#include <windows.h>
 #include <iostream>
-#include <filesystem>
 
 namespace FS = std::filesystem;
-
-void dllMonitor() {}
 
 int main(int argc, char** argv)
 {

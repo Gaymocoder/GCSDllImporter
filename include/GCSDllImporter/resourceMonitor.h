@@ -1,4 +1,7 @@
 #include <windows.h>
+#include <tlhelp32.h>
+
+#include <vector>
 #include <filesystem>
 
 namespace FS = std::filesystem;
@@ -8,4 +11,4 @@ typedef PROCESS_INFORMATION WIN_PI;
 
 bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si);
 
-uint16_t processDllCount(uint32_t processID);
+std::vector <FS::path> getProcessUsedModules(uint32_t processID);

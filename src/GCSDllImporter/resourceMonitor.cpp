@@ -1,5 +1,15 @@
 #include <typeinfo>
+#include <thread>
+#include <chrono>
+
 #include "GCSDllImporter/resourceMonitor.h"
+
+using namespace std::chrono_literals;
+
+bool isProcessActive(HANDLE process)
+{
+    return (WaitForSingleObject(process, 0) == WAIT_TIMEOUT);
+}
 
 void waitLaunchedProcess(const FS::path &path, const WIN_PI* pi, const WIN_SI* si)
 {
@@ -20,6 +30,35 @@ bool checkPtr(T* &ptr, bool &malloced)
         if (ptr == nullptr) return false;
     }
     return true;
+}
+
+std::vector <FS::path> getProcessUsedModules(uint32_t processID)
+{
+    std::vector <FS::path> _return;
+    HANDLE prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
+    if (prSnapshot == INVALID_HANDLE_VALUE)
+    {
+        fprintf(stderr, "Failed to create snapshot of the process %u modules. Error code: %lu\n", processID, GetLastError());
+        return _return;
+    }
+
+    MODULEENTRY32 moduleEntry;
+    moduleEntry.dwSize = sizeof(MODULEENTRY32);
+    uint16_t i = 1;
+    if (Module32First(prSnapshot, &moduleEntry))
+    {
+        do
+        {
+            fprintf(stderr, "Used module #%u: %s\n", i++, moduleEntry.szExePath);
+        } while (Module32Next(prSnapshot, &moduleEntry));
+        fprintf(stderr, "\n");
+        return _return;
+    }
+    else
+    {
+        fprintf(stderr, "Can't get the first module, used by the process %u\nError code: %lu\n", processID, GetLastError());
+        return _return;
+    }
 }
 
 bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
@@ -47,7 +86,11 @@ bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
     
     if (success)
     {
-        waitLaunchedProcess(path, pi, si);
+        while (isProcessActive(pi->hProcess))
+        {
+            getProcessUsedModules(pi->dwProcessId);
+            std::this_thread::sleep_for(500ms);
+        }
         if (local_pi) free(pi);
         if (local_si) free(si);
         return true;
