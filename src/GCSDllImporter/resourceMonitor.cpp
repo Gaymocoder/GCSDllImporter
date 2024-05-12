@@ -35,6 +35,9 @@ bool checkPtr(T* &ptr, bool &malloced)
 std::vector <FS::path> getProcessUsedModules(uint32_t processID)
 {
     std::vector <FS::path> _return;
+    MODULEENTRY32 moduleEntry;
+    moduleEntry.dwSize = sizeof(MODULEENTRY32);
+
     HANDLE prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
     if (prSnapshot == INVALID_HANDLE_VALUE)
     {
@@ -42,23 +45,17 @@ std::vector <FS::path> getProcessUsedModules(uint32_t processID)
         return _return;
     }
 
-    MODULEENTRY32 moduleEntry;
-    moduleEntry.dwSize = sizeof(MODULEENTRY32);
-    uint16_t i = 1;
-    if (Module32First(prSnapshot, &moduleEntry))
-    {
-        do
-        {
-            fprintf(stderr, "Used module #%u: %s\n", i++, moduleEntry.szExePath);
-        } while (Module32Next(prSnapshot, &moduleEntry));
-        fprintf(stderr, "\n");
-        return _return;
-    }
-    else
+    BOOL moduleFetched = Module32First(prSnapshot, &moduleEntry);
+    if (!moduleFetched)
     {
         fprintf(stderr, "Can't get the first module, used by the process %u\nError code: %lu\n", processID, GetLastError());
         return _return;
     }
+    for (int i = 1; moduleFetched; moduleFetched = Module32Next(prSnapshot, &moduleEntry))
+        fprintf(stderr, "Used module #%u: %s\n", i++, moduleEntry.szExePath);
+    fprintf(stderr, "\n");
+
+    return _return;
 }
 
 bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
