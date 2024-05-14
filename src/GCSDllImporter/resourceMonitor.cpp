@@ -1,24 +1,7 @@
 #include "GCSDllImporter/resourceMonitor.h"
+#include "GCSDllImporter/extras.h"
 
-#include <typeinfo>
-#include <thread>
-
-bool isProcessActive(HANDLE process)
-{
-    return (WaitForSingleObject(process, 0) == WAIT_TIMEOUT);
-}
-
-template <typename T>
-bool checkPtr(T* &ptr, bool &malloced)
-{
-    if (ptr == nullptr)
-    {
-        malloced = true;
-        ptr = (T*) malloc(sizeof(T));
-        if (ptr == nullptr) return false;
-    }
-    return true;
-}
+#include <tlhelp32.h>
 
 std::vector <FS::path> getProcessUsedModules(uint32_t processID)
 {
@@ -44,11 +27,11 @@ std::vector <FS::path> getProcessUsedModules(uint32_t processID)
 
 void printProcessUsedModules(uint32_t processID)
 {
-    fprintf(stderr, "List of modules, loaded by process %u:\n", processID);
+    printf("List of modules, loaded by process %u:\n", processID);
     std::vector <FS::path> modules = getProcessUsedModules(processID);
     for(size_t i = 0, len = modules.size(); i < len; ++i)
-        fprintf(stderr, "Module %3lli: %s\n", i+1, modules[i].string().c_str());
-    fprintf(stderr, "\n");
+        printf("Module %3lli: %s\n", i+1, modules[i].string().c_str());
+    printf("\n");
 }
 
 // If NULL has been passed as pi-argument,
@@ -76,7 +59,6 @@ bool startApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
     si->cb = sizeof(*si);
     
     BOOL success = CreateProcessA(path.string().c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, si, pi);
-    std::this_thread::sleep_for(100ms);
     
     if (!success)
     {

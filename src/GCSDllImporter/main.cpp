@@ -1,10 +1,11 @@
+#include "GCSDllImporter/extras.h"
 #include "GCSDllImporter/resourceMonitor.h"
 
-#include <iostream>
-#include <thread>
 #include <chrono>
+#include <thread>
+#include <iostream>
 
-namespace FS = std::filesystem;
+using namespace std::chrono_literals;
 
 int main(int argc, char** argv)
 {
@@ -43,8 +44,8 @@ int main(int argc, char** argv)
 
     while (isProcessActive(pi->hProcess))
     {
+        std::this_thread::sleep_for(500ms);
         system("cls");
         printProcessUsedModules(pi->dwProcessId);
-        std::this_thread::sleep_for(500ms);
     }
 }

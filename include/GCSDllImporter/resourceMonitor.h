@@ -1,18 +1,20 @@
+#ifndef __RESOURCE_MONITOR_H__
+#define __RESOURCE_MONITOR_H__
+
 #include <windows.h>
-#include <tlhelp32.h>
 
 #include <vector>
-#include <chrono>
+#include <cstdint>
 #include <filesystem>
 
 namespace FS = std::filesystem;
-using namespace std::chrono_literals;
 
 typedef STARTUPINFOA WIN_SI;
 typedef PROCESS_INFORMATION WIN_PI;
 
-bool isProcessActive(HANDLE process);
-bool startApp(const FS::path &path, WIN_PI* pi, WIN_SI* si);
-
 std::vector <FS::path> getProcessUsedModules(uint32_t processID);
 void printProcessUsedModules(uint32_t processID);
+
+bool startApp(const FS::path &path, WIN_PI* pi, WIN_SI* si);
+
+#endif
