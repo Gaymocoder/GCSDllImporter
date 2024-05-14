@@ -32,20 +32,6 @@ int main(int argc, char** argv)
         return 3;
     }
 
-    WIN_PI* pi = (WIN_PI*) malloc (sizeof(WIN_PI));
-    if (pi == NULL)
-    {
-        fprintf(stderr, "Cannot allocate memory for PROCESS_INFORMATION\n");
-        return 4;
-    }
-
-    bool success = startApp(fullAppPath, pi, NULL);
-    if (!success) return 5;
-
-    while (isProcessActive(pi->hProcess))
-    {
-        std::this_thread::sleep_for(500ms);
-        system("cls");
-        printProcessUsedModules(pi->dwProcessId);
-    }
+    HANDLE exeProcess = waitForStart(fullAppPath);
+    CloseHandle(exeProcess);
 }

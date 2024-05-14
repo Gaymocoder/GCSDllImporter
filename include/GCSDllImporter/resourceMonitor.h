@@ -15,6 +15,7 @@ typedef PROCESS_INFORMATION WIN_PI;
 std::vector <FS::path> getProcessUsedModules(uint32_t processID);
 void printProcessUsedModules(uint32_t processID);
 
-bool startApp(const FS::path &path, WIN_PI* pi, WIN_SI* si);
+HANDLE findProcess(const FS::path &exePath);
+HANDLE waitForStart(const FS::path &exePath);
 
 #endif

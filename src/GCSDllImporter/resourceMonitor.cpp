@@ -3,6 +3,11 @@
 
 #include <tlhelp32.h>
 
+#include <chrono>
+#include <thread>
+
+using namespace std::chrono_literals;
+
 std::vector <FS::path> getProcessUsedModules(uint32_t processID)
 {
     std::vector <FS::path> _return;
@@ -34,51 +39,15 @@ void printProcessUsedModules(uint32_t processID)
     printf("\n");
 }
 
-// If NULL has been passed as pi-argument,
-// function will wait untill the process exits
-// to close the process's and thread's handles by itself
-bool startApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
+HANDLE findProcess(const FS::path &exePath)
 {
-    bool local_pi = false,
-         local_si = false;
+    return NULL;
+}
 
-    if (!checkPtr(pi, local_pi))
-    {
-        fprintf(stderr, "Cannot allocate memory for PROCESS_INFORMATION\n");
-        return false;
-    }
-    
-    if (!checkPtr(si, local_si))
-    {
-        fprintf(stderr, "Cannot allocate memory for STARTUPINFO\n");
-        return false;
-    }
-
-    ZeroMemory(si, sizeof(*si));
-    ZeroMemory(pi, sizeof(*pi));
-    si->cb = sizeof(*si);
-    
-    BOOL success = CreateProcessA(path.string().c_str(), NULL, NULL, NULL, TRUE, 0, NULL, NULL, si, pi);
-    
-    if (!success)
-    {
-        fprintf(stderr, "Failed to create process. Error code: %lu\n", GetLastError());
-        if (local_pi) free(pi);
-        if (local_si) free(si);
-        return false;
-    }
-
-    if (!local_pi)
-    {
-        if (local_si) free(si);
-        return true;
-    }
-
-    WaitForSingleObject(pi->hProcess, INFINITE);
-    CloseHandle(pi->hProcess);
-    CloseHandle(pi->hThread);
-    if (local_si) free(si);
-    free(pi);
-
-    return true;
+HANDLE waitForStart(const FS::path &exePath)
+{
+    HANDLE exeProcess = findProcess(exePath);
+    for(; exeProcess == NULL; exeProcess = findProcess(exePath))
+        std::this_thread::sleep_for(250ms);
+    return exeProcess;
 }
