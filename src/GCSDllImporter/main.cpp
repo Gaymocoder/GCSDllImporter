@@ -1,6 +1,8 @@
 #include "GCSDllImporter/resourceMonitor.h"
 
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 namespace FS = std::filesystem;
 
@@ -20,14 +22,29 @@ int main(int argc, char** argv)
     catch(FS::filesystem_error &err)
     {
         fprintf(stderr, "Invalid path has been requested:\nFile \"%s\" not found\n", fullAppPath.string().c_str());
-        return 1;
+        return 2;
     }
 
     if (fullAppPath.extension() != ".exe")
     {
         fprintf(stderr, "Invalid path has been requested:\nFile \"%s\" is not executable\n", fullAppPath.string().c_str());
-        return 1;
+        return 3;
     }
 
-    bool success = launchApp(fullAppPath, NULL, NULL);
+    WIN_PI* pi = (WIN_PI*) malloc (sizeof(WIN_PI));
+    if (pi == NULL)
+    {
+        fprintf(stderr, "Cannot allocate memory for PROCESS_INFORMATION\n");
+        return 4;
+    }
+
+    bool success = startApp(fullAppPath, pi, NULL);
+    if (!success) return 5;
+
+    while (isProcessActive(pi->hProcess))
+    {
+        system("cls");
+        printProcessUsedModules(pi->dwProcessId);
+        std::this_thread::sleep_for(500ms);
+    }
 }

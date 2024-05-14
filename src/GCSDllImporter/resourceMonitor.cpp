@@ -1,10 +1,7 @@
-#include <typeinfo>
-#include <thread>
-#include <chrono>
-
 #include "GCSDllImporter/resourceMonitor.h"
 
-using namespace std::chrono_literals;
+#include <typeinfo>
+#include <thread>
 
 bool isProcessActive(HANDLE process)
 {
@@ -47,17 +44,17 @@ std::vector <FS::path> getProcessUsedModules(uint32_t processID)
 
 void printProcessUsedModules(uint32_t processID)
 {
-    fprintf(stderr, "List of modules, loaded by process %lu:\n", processID);
+    fprintf(stderr, "List of modules, loaded by process %u:\n", processID);
     std::vector <FS::path> modules = getProcessUsedModules(processID);
     for(size_t i = 0, len = modules.size(); i < len; ++i)
         fprintf(stderr, "Module %3lli: %s\n", i+1, modules[i].string().c_str());
-    fprintf(stderr, "\n")
+    fprintf(stderr, "\n");
 }
 
 // If NULL has been passed as pi-argument,
 // function will wait untill the process exits
 // to close the process's and thread's handles by itself
-bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
+bool startApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
 {
     bool local_pi = false,
          local_si = false;
@@ -95,13 +92,7 @@ bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
         return true;
     }
 
-    while (local_pi && isProcessActive(pi->hProcess))
-    {
-        system("cls");
-        printProcessUsedModules(pi->dwProcessId);
-        std::this_thread::sleep_for(500ms);
-    }
-    
+    WaitForSingleObject(pi->hProcess, INFINITE);
     CloseHandle(pi->hProcess);
     CloseHandle(pi->hThread);
     if (local_si) free(si);
