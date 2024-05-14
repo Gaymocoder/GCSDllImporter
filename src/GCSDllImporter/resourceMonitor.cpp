@@ -11,15 +11,6 @@ bool isProcessActive(HANDLE process)
     return (WaitForSingleObject(process, 0) == WAIT_TIMEOUT);
 }
 
-void waitLaunchedProcess(const FS::path &path, const WIN_PI* pi, const WIN_SI* si)
-{
-    fprintf(stderr, "The app \"%s\" has been successfully launched (process_id: %lu)\n", path.string().c_str(), pi->dwProcessId);
-    WaitForSingleObject(pi->hProcess, INFINITE);
-    CloseHandle(pi->hProcess);
-    CloseHandle(pi->hThread);
-    fprintf(stderr, "Process %lu has been successfully сlosed\n", pi->dwProcessId);
-}
-
 template <typename T>
 bool checkPtr(T* &ptr, bool &malloced)
 {
@@ -54,6 +45,18 @@ std::vector <FS::path> getProcessUsedModules(uint32_t processID)
     return _return;
 }
 
+void printProcessUsedModules(uint32_t processID)
+{
+    fprintf(stderr, "List of modules, loaded by process %lu:\n", processID);
+    std::vector <FS::path> modules = getProcessUsedModules(processID);
+    for(size_t i = 0, len = modules.size(); i < len; ++i)
+        fprintf(stderr, "Module %3lli: %s\n", i+1, modules[i].string().c_str());
+    fprintf(stderr, "\n")
+}
+
+// If NULL has been passed as pi-argument,
+// function will wait untill the process exits
+// to close the process's and thread's handles by itself
 bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
 {
     bool local_pi = false,
@@ -64,7 +67,7 @@ bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
         fprintf(stderr, "Cannot allocate memory for PROCESS_INFORMATION\n");
         return false;
     }
-
+    
     if (!checkPtr(si, local_si))
     {
         fprintf(stderr, "Cannot allocate memory for STARTUPINFO\n");
@@ -86,20 +89,23 @@ bool launchApp(const FS::path &path, WIN_PI* pi, WIN_SI* si)
         return false;
     }
 
-    while (isProcessActive(pi->hProcess))
+    if (!local_pi)
+    {
+        if (local_si) free(si);
+        return true;
+    }
+
+    while (local_pi && isProcessActive(pi->hProcess))
     {
         system("cls");
-        fprintf(stderr, "List of modules, loaded by process %lu:\n", pi->dwProcessId);
-        std::vector <FS::path> modules = getProcessUsedModules(pi->dwProcessId);
-        for(size_t i = 0, len = modules.size(); i < len; ++i)
-            fprintf(stderr, "Module %3lli: %s\n", i+1, modules[i].string().c_str());
-        fprintf(stderr, "\n")
+        printProcessUsedModules(pi->dwProcessId);
         std::this_thread::sleep_for(500ms);
     }
     
     CloseHandle(pi->hProcess);
     CloseHandle(pi->hThread);
-    if (local_pi) free(pi);
     if (local_si) free(si);
+    free(pi);
+
     return true;
 }
