@@ -6,10 +6,11 @@
 
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 using namespace std::chrono_literals;
 
-std::vector <FS::path> getProcessUsedModules(uint32_t processID)
+std::vector <FS::path> getProcessModules(uint32_t processID)
 {
     std::vector <FS::path> _return;
     MODULEENTRY32 moduleEntry;
@@ -31,15 +32,6 @@ std::vector <FS::path> getProcessUsedModules(uint32_t processID)
     return _return;
 }
 
-void printProcessUsedModules(uint32_t processID)
-{
-    printf("List of modules, loaded by process %u:\n", processID);
-    std::vector <FS::path> modules = getProcessUsedModules(processID);
-    for(size_t i = 0, len = modules.size(); i < len; ++i)
-        printf("Module %3lli: %s\n", i+1, modules[i].string().c_str());
-    printf("\n");
-}
-
 bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
 {
     DWORD processCount;
@@ -56,7 +48,7 @@ bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
 
     for(uint32_t i = 0; i < processCount && *returnProcess == NULL; ++i)
     {
-        HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, PIDs[i]);
+        HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | SYNCHRONIZE, FALSE, PIDs[i]);
         if (process == NULL) continue;
 
         char* processExePath = (char*) malloc (MAX_PATH + 1);
@@ -85,5 +77,37 @@ HANDLE waitForStart(const FS::path &exePath)
     bool success = findProcess(exePath.string().c_str(), &exeProcess);
     for(; exeProcess == NULL && success; success = findProcess(exePath.string().c_str(), &exeProcess))
         std::this_thread::sleep_for(100ms);
+    fprintf(stderr, "The application has been launched with PID%lu. ", GetProcessId(exeProcess));
     return exeProcess;
+}
+
+bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
+{
+    fprintf(stderr, "Tracking used modules... ");
+    bool local_modules = false;
+    if (modules == NULL)
+    {
+        modules = new std::vector <FS::path> ();
+        local_modules = true;
+    }
+
+    while (isProcessActive(process))
+    {
+        std::vector <FS::path> currentModules = getProcessModules(GetProcessId(process));
+        if (currentModules.size() == 0) return false;
+        for(auto it = currentModules.begin(); it != currentModules.end(); ++it)
+            if (std::find(modules->begin(), modules->end(), *it) == modules->end() && it->extension() != ".exe")
+                modules->push_back(*it);
+        std::this_thread::sleep_for(100ms);
+    }
+
+    if (local_modules)
+    {
+        fprintf(stdout, "Process has been terminated.\n\nModules been used by the application:\n");
+        for(size_t i = 0; i < modules->size(); ++i)
+            fprintf(stdout, "%3llu. %s\n", i, (*modules)[i].string().c_str());
+        delete modules;
+    }
+
+    return true;
 }

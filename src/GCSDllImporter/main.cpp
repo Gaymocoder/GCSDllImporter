@@ -34,5 +34,7 @@ int main(int argc, char** argv)
 
     HANDLE exeProcess = waitForStart(fullAppPath);
     if (exeProcess == NULL) return 4;
-    CloseHandle(exeProcess);
+
+    if (!trackProcessModules(exeProcess, NULL)) return 5;
+    CloseHandle(exeProcess);    
 }
