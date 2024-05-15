@@ -36,5 +36,5 @@ int main(int argc, char** argv)
     if (exeProcess == NULL) return 4;
 
     if (!trackProcessModules(exeProcess, NULL)) return 5;
-    CloseHandle(exeProcess);    
+    CloseHandle(exeProcess);
 }

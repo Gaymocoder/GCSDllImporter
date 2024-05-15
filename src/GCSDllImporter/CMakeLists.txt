@@ -7,7 +7,7 @@ set(MONITOR_CPP resourceMonitor.cpp)
 
 add_library(GCS.Extras SHARED ${EXTRAS_CPP})
 add_library(GCS.ResourceMonitor SHARED ${MONITOR_CPP})
-add_executable(GCSDllImporter ${MAIN_CPP})
+add_executable(GCS.DllImporter ${MAIN_CPP})
 
 target_link_libraries(GCS.ResourceMonitor GCS.Extras)
-target_link_libraries(GCSDllImporter GCS.Extras GCS.ResourceMonitor)
+target_link_libraries(GCS.DllImporter GCS.Extras GCS.ResourceMonitor)
