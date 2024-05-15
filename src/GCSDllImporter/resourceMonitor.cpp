@@ -1,6 +1,7 @@
-#include "GCSDllImporter/resourceMonitor.h"
 #include "GCSDllImporter/extras.h"
+#include "GCSDllImporter/resourceMonitor.h"
 
+#include <psapi.h>
 #include <tlhelp32.h>
 
 #include <chrono>
@@ -39,15 +40,50 @@ void printProcessUsedModules(uint32_t processID)
     printf("\n");
 }
 
-HANDLE findProcess(const FS::path &exePath)
+bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
 {
-    return NULL;
+    DWORD processCount;
+    DWORD* PIDs = (DWORD*) malloc (sizeof(DWORD) * 1024);
+    if (PIDs == NULL)
+    {
+        fprintf(stderr, "Failed to allocate memory for PIDs (findProcess-error)\n");
+        return false;
+    }
+
+    EnumProcesses(PIDs, sizeof(DWORD) * 1024, &processCount);
+    PIDs = (DWORD*) realloc(PIDs, (size_t) processCount);
+    processCount /= sizeof(DWORD);
+
+    for(uint32_t i = 0; i < processCount && *returnProcess == NULL; ++i)
+    {
+        HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, PIDs[i]);
+        if (process == NULL) continue;
+
+        char* processExePath = (char*) malloc (MAX_PATH + 1);
+        if (processExePath == NULL)
+        {
+            fprintf(stderr, "Failed to allocate memory for processExePath (findProcess-error)\n");
+            return false;
+        }
+
+        uint32_t pathLen = GetModuleFileNameExA(process, NULL, processExePath, MAX_PATH + 1);
+        processExePath = (char*) realloc(processExePath, pathLen + 1);
+
+        if (strcmp(requestedExePath, processExePath) == 0)
+            *returnProcess = process;
+        free(processExePath);
+    }
+
+    free(PIDs);
+    return true;
 }
 
 HANDLE waitForStart(const FS::path &exePath)
 {
-    HANDLE exeProcess = findProcess(exePath);
-    for(; exeProcess == NULL; exeProcess = findProcess(exePath))
-        std::this_thread::sleep_for(250ms);
+    fprintf(stderr, "Waiting for application to start: \"%s\"...\n", exePath.string().c_str());
+    HANDLE exeProcess = NULL;
+    bool success = findProcess(exePath.string().c_str(), &exeProcess);
+    for(; exeProcess == NULL && success; success = findProcess(exePath.string().c_str(), &exeProcess))
+        std::this_thread::sleep_for(100ms);
     return exeProcess;
 }

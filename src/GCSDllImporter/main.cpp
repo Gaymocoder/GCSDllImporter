@@ -33,5 +33,6 @@ int main(int argc, char** argv)
     }
 
     HANDLE exeProcess = waitForStart(fullAppPath);
+    if (exeProcess == NULL) return 4;
     CloseHandle(exeProcess);
 }
