@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <thread>
+#include <iostream>
 #include <algorithm>
 
 using namespace std::chrono_literals;
@@ -13,18 +14,23 @@ using namespace std::chrono_literals;
 std::vector <FS::path> getProcessModules(uint32_t processID)
 {
     std::vector <FS::path> _return;
-    MODULEENTRY32 moduleEntry;
-    moduleEntry.dwSize = sizeof(MODULEENTRY32);
+    MODULEENTRY32W moduleEntry;
+    moduleEntry.dwSize = sizeof(MODULEENTRY32W);
     HANDLE prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
-    if (prSnapshot == INVALID_HANDLE_VALUE)
+    while (prSnapshot == INVALID_HANDLE_VALUE)
     {
+        if (GetLastError() == 24)
+        {
+            prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
+            continue;
+        }
         fprintf(stderr, "Failed to create snapshot of the process %u modules. Error code: %lu\n", processID, GetLastError());
         return _return;
     }
     
-    BOOL moduleFetched = Module32First(prSnapshot, &moduleEntry);
-    for (; moduleFetched; moduleFetched = Module32Next(prSnapshot, &moduleEntry))
-        _return.push_back(moduleEntry.szExePath);
+    BOOL moduleFetched = Module32FirstW(prSnapshot, &moduleEntry);
+    for (; moduleFetched; moduleFetched = Module32NextW(prSnapshot, &moduleEntry))
+        _return.push_back(FS::path(moduleEntry.szExePath));
     
     if (!_return.size())
         fprintf(stderr, "Can't get the first module, used by the process %u\nError code: %lu\n", processID, GetLastError());
@@ -97,7 +103,10 @@ bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
         if (currentModules.size() == 0) return false;
         for(auto it = currentModules.begin(); it != currentModules.end(); ++it)
             if (std::find(modules->begin(), modules->end(), *it) == modules->end() && it->extension() != ".exe")
+            {
+                fprintf(stderr, "%3llu. %ls\n", modules->size(), it->wstring().c_str());
                 modules->push_back(*it);
+            }
         std::this_thread::sleep_for(100ms);
     }
 

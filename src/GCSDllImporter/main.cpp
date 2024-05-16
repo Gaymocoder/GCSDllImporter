@@ -3,12 +3,14 @@
 
 #include <chrono>
 #include <thread>
+#include <locale>
 #include <iostream>
 
 using namespace std::chrono_literals;
 
 int main(int argc, char** argv)
 {
+    setlocale(LC_ALL, "");
     if (argc < 2)
     {
         fprintf(stderr, "Usage: %s <path-to-EXE-file>\n", argv[0]);

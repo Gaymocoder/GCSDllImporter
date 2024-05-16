@@ -3,7 +3,9 @@
 
 #include <windows.h>
 
-bool isProcessActive(HANDLE process);
+#include <locale>
+#include <codecvt>
+#include <string>
 
 template <typename T>
 bool checkPtr(T* &ptr, bool &malloced)
@@ -16,5 +18,7 @@ bool checkPtr(T* &ptr, bool &malloced)
     }
     return true;
 }
+
+bool isProcessActive(HANDLE process);
 
 #endif
