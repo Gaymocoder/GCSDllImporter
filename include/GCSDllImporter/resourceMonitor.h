@@ -13,7 +13,7 @@ typedef STARTUPINFOA WIN_SI;
 typedef PROCESS_INFORMATION WIN_PI;
 
 HANDLE waitForStart(const FS::path &exePath);
-bool findProcess(const FS::path &exePath, HANDLE* returnProcess);
+bool findProcess(const wchar_t* exePath, HANDLE* returnProcess);
 
 bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules);
 std::vector <FS::path> getProcessModules(const HANDLE &process);

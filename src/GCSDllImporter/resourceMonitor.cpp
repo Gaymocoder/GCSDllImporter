@@ -6,7 +6,6 @@
 
 #include <chrono>
 #include <thread>
-#include <iostream>
 #include <algorithm>
 
 using namespace std::chrono_literals;
@@ -83,15 +82,20 @@ bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
         if (processExePath == NULL)
         {
             fprintf(stderr, "Failed to allocate memory for processExePath (findProcess-error)\n");
+            CloseHandle(process);
             free(PIDs);
             return false;
         }
 
         uint32_t pathLen = GetModuleFileNameExA(process, NULL, processExePath, MAX_PATH + 1);
-        processExePath = (char*) realloc(processExePath, pathLen + 1);
+        processExePath = (char*) realloc (processExePath, pathLen + 1);
 
         if (strcmp(requestedExePath, processExePath) == 0)
             *returnProcess = process;
+
+        if (*returnProcess == NULL)
+            CloseHandle(process);
+            
         free(processExePath);
     }
 
