@@ -3,9 +3,11 @@
 
 #include <windows.h>
 
-#include <locale>
-#include <codecvt>
 #include <string>
+#include <vector>
+#include <filesystem>
+
+namespace FS = std::filesystem;
 
 template <typename T>
 bool checkPtr(T* &ptr, bool &malloced)

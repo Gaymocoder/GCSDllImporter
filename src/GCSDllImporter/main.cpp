@@ -37,6 +37,7 @@ int main(int argc, char** argv)
     HANDLE exeProcess = waitForStart(fullAppPath);
     if (exeProcess == NULL) return 4;
 
-    if (!trackProcessModules(exeProcess, NULL)) return 5;
+    std::vector <FS::path> modules;
+    if (!trackProcessModules(exeProcess, &modules)) return 5;
     CloseHandle(exeProcess);
 }

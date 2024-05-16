@@ -89,7 +89,7 @@ HANDLE waitForStart(const FS::path &exePath)
 
 bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
 {
-    fprintf(stderr, "Tracking used modules... ");
+    fprintf(stderr, "Tracking used modules... \n");
     bool local_modules = false;
     if (modules == NULL)
     {
@@ -100,23 +100,23 @@ bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
     while (isProcessActive(process))
     {
         std::vector <FS::path> currentModules = getProcessModules(GetProcessId(process));
-        if (currentModules.size() == 0) return false;
+        if (currentModules.size() == 0)
+        {
+            if (local_modules) delete modules;
+            return false;
+        }
+
         for(auto it = currentModules.begin(); it != currentModules.end(); ++it)
+        {
             if (std::find(modules->begin(), modules->end(), *it) == modules->end() && it->extension() != ".exe")
             {
-                fprintf(stderr, "%3llu. %ls\n", modules->size(), it->wstring().c_str());
                 modules->push_back(*it);
+                fprintf(stderr, "%3llu. %ls\n", modules->size(), it->wstring().c_str());
             }
+        }
         std::this_thread::sleep_for(100ms);
     }
 
-    if (local_modules)
-    {
-        fprintf(stdout, "Process has been terminated.\n\nModules been used by the application:\n");
-        for(size_t i = 0; i < modules->size(); ++i)
-            fprintf(stdout, "%3llu. %s\n", i, (*modules)[i].string().c_str());
-        delete modules;
-    }
-
+    if (local_modules) delete modules;
     return true;
 }
