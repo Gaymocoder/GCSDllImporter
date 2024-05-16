@@ -11,30 +11,52 @@
 
 using namespace std::chrono_literals;
 
-std::vector <FS::path> getProcessModules(uint32_t processID)
+std::vector <FS::path> getProcessModules(const HANDLE &process)
 {
     std::vector <FS::path> _return;
-    MODULEENTRY32W moduleEntry;
-    moduleEntry.dwSize = sizeof(MODULEENTRY32W);
-    HANDLE prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
-    while (prSnapshot == INVALID_HANDLE_VALUE)
+    HMODULE* modules = (HMODULE*) malloc (sizeof(HMODULE) * 1024);
+    if (modules == NULL)
     {
-        if (GetLastError() == 24)
-        {
-            prSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, processID);
-            continue;
-        }
-        fprintf(stderr, "Failed to create snapshot of the process %u modules. Error code: %lu\n", processID, GetLastError());
+        fprintf(stderr, "Failed to allocate memory for \"modules\" (getProcessModules)\n");
         return _return;
     }
-    
-    BOOL moduleFetched = Module32FirstW(prSnapshot, &moduleEntry);
-    for (; moduleFetched; moduleFetched = Module32NextW(prSnapshot, &moduleEntry))
-        _return.push_back(FS::path(moduleEntry.szExePath));
-    
-    if (!_return.size())
-        fprintf(stderr, "Can't get the first module, used by the process %u\nError code: %lu\n", processID, GetLastError());
 
+    DWORD modulesCount = 0;
+    if (!EnumProcessModulesEx(process, modules, sizeof(HMODULE) * 1024, &modulesCount, LIST_MODULES_ALL))
+    {
+        fprintf(stderr, "Failed to get modules list of process %lu. Error code: %lu\n", GetProcessId(process), GetLastError());
+        free(modules);
+        return _return;
+    }
+
+    modulesCount /= sizeof(HMODULE);
+    modules = (HMODULE*) realloc(modules, sizeof(HMODULE) * modulesCount);
+    for(size_t i = 0; i < modulesCount; ++i)
+    {
+        wchar_t* modulePath = (wchar_t*) malloc (sizeof(wchar_t) * (MAX_PATH+1));
+        if (modulePath == NULL)
+        {
+            fprintf(stderr, "Failed to allocate memory for \"modulePath\" (getProcessModules)\n");
+            free(modules);
+            return _return;
+        }
+
+        uint32_t pathSize = GetModuleFileNameExW(process, modules[i], modulePath, (MAX_PATH+1) * (sizeof(wchar_t)));
+        if (pathSize == 0)
+        {
+            uint32_t error = GetLastError();
+            if (error != ERROR_INVALID_HANDLE && error != ERROR_PARTIAL_COPY)
+                fprintf(stderr, "Failed to get module path. Error code: %u\n", error);
+            free(modulePath);
+            continue;
+        }
+
+        modulePath = (wchar_t*) realloc(modulePath, (pathSize + 1) *sizeof(wchar_t));
+        _return.push_back(FS::path(modulePath));
+        free(modulePath);
+    }
+
+    free(modules);
     return _return;
 }
 
@@ -61,6 +83,7 @@ bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
         if (processExePath == NULL)
         {
             fprintf(stderr, "Failed to allocate memory for processExePath (findProcess-error)\n");
+            free(PIDs);
             return false;
         }
 
@@ -89,7 +112,6 @@ HANDLE waitForStart(const FS::path &exePath)
 
 bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
 {
-    fprintf(stderr, "Tracking used modules... \n");
     bool local_modules = false;
     if (modules == NULL)
     {
@@ -97,9 +119,10 @@ bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
         local_modules = true;
     }
 
+    fprintf(stderr, "Tracking used modules... \n");
     while (isProcessActive(process))
     {
-        std::vector <FS::path> currentModules = getProcessModules(GetProcessId(process));
+        std::vector <FS::path> currentModules = getProcessModules(process);
         if (currentModules.size() == 0)
         {
             if (local_modules) delete modules;

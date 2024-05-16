@@ -16,6 +16,6 @@ HANDLE waitForStart(const FS::path &exePath);
 bool findProcess(const FS::path &exePath, HANDLE* returnProcess);
 
 bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules);
-std::vector <FS::path> getProcessModules(uint32_t processID);
+std::vector <FS::path> getProcessModules(const HANDLE &process);
 
 #endif
