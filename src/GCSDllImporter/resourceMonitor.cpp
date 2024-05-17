@@ -59,7 +59,7 @@ std::vector <FS::path> getProcessModules(const HANDLE &process)
     return _return;
 }
 
-bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
+bool findProcess(const wchar_t* requestedExePath, HANDLE* returnProcess)
 {
     DWORD processCount;
     DWORD* PIDs = (DWORD*) malloc (sizeof(DWORD) * 1024);
@@ -78,7 +78,8 @@ bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
         HANDLE process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | SYNCHRONIZE, FALSE, PIDs[i]);
         if (process == NULL) continue;
 
-        char* processExePath = (char*) malloc (MAX_PATH + 1);
+        uint32_t pathLen = sizeof(wchar_t) * (MAX_PATH + 1);
+        wchar_t* processExePath = (wchar_t*) malloc (pathLen);
         if (processExePath == NULL)
         {
             fprintf(stderr, "Failed to allocate memory for processExePath (findProcess-error)\n");
@@ -87,15 +88,15 @@ bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
             return false;
         }
 
-        uint32_t pathLen = GetModuleFileNameExA(process, NULL, processExePath, MAX_PATH + 1);
-        processExePath = (char*) realloc (processExePath, pathLen + 1);
+        pathLen = (GetModuleFileNameExW(process, NULL, processExePath, pathLen) + 1) * sizeof(wchar_t);
+        processExePath = (wchar_t*) realloc (processExePath, pathLen);
 
-        if (strcmp(requestedExePath, processExePath) == 0)
+        if (wcscmp(requestedExePath, processExePath) == 0)
             *returnProcess = process;
 
         if (*returnProcess == NULL)
             CloseHandle(process);
-            
+
         free(processExePath);
     }
 
@@ -105,10 +106,10 @@ bool findProcess(const char* requestedExePath, HANDLE* returnProcess)
 
 HANDLE waitForStart(const FS::path &exePath)
 {
-    fprintf(stderr, "Waiting for application to start: \"%s\"...\n", exePath.string().c_str());
+    fprintf(stderr, "Waiting for application to start: \"%ls\"...\n", exePath.wstring().c_str());
     HANDLE exeProcess = NULL;
-    bool success = findProcess(exePath.string().c_str(), &exeProcess);
-    for(; exeProcess == NULL && success; success = findProcess(exePath.string().c_str(), &exeProcess))
+    bool success = findProcess(exePath.wstring().c_str(), &exeProcess);
+    for(; exeProcess == NULL && success; success = findProcess(exePath.wstring().c_str(), &exeProcess))
         std::this_thread::sleep_for(100ms);
     fprintf(stderr, "The application has been launched with PID%lu. ", GetProcessId(exeProcess));
     return exeProcess;

@@ -1,16 +1,13 @@
 #include "GCSDllImporter/extras.h"
 #include "GCSDllImporter/resourceMonitor.h"
 
-#include <chrono>
-#include <thread>
 #include <locale>
 #include <iostream>
-
-using namespace std::chrono_literals;
 
 int main(int argc, char** argv)
 {
     setlocale(LC_ALL, "");
+    wchar_t** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (argc < 2)
     {
         fprintf(stderr, "Usage: %s <path-to-EXE-file>\n", argv[0]);
@@ -20,17 +17,17 @@ int main(int argc, char** argv)
     FS::path fullAppPath = FS::path();
     try
     {
-        fullAppPath = FS::canonical(argv[1]);
+        fullAppPath = FS::canonical(FS::path(wargv[1]));
     }
     catch(FS::filesystem_error &err)
     {
-        fprintf(stderr, "Invalid path has been requested:\nFile \"%s\" not found\n", fullAppPath.string().c_str());
+        fprintf(stderr, "Invalid path has been requested:\nFile \"%ls\" not found\n", fullAppPath.wstring().c_str());
         return 2;
     }
 
     if (fullAppPath.extension() != ".exe")
     {
-        fprintf(stderr, "Invalid path has been requested:\nFile \"%s\" is not executable\n", fullAppPath.string().c_str());
+        fprintf(stderr, "Invalid path has been requested:\nFile \"%ls\" is not executable\n", fullAppPath.wstring().c_str());
         return 3;
     }
 
