@@ -37,4 +37,6 @@ int main(int argc, char** argv)
     std::vector <FS::path> modules;
     if (!trackProcessModules(exeProcess, &modules)) return 5;
     CloseHandle(exeProcess);
+
+    PressEnter();
 }

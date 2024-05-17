@@ -145,6 +145,7 @@ bool trackProcessModules(HANDLE process, std::vector <FS::path> *modules)
         std::this_thread::sleep_for(100ms);
     }
 
+    fprintf(stderr, "\nThe tracking process has been terminated.\n");
     if (local_modules) delete modules;
     return true;
 }

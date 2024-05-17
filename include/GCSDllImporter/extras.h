@@ -21,6 +21,7 @@ bool checkPtr(T* &ptr, bool &malloced)
     return true;
 }
 
+void PressEnter();
 bool isProcessActive(HANDLE process);
 
 #endif
