@@ -1,5 +1,5 @@
-#include "GCSDllImporter/extras.h"
-#include "GCSDllImporter/resourceMonitor.h"
+#include "resourceMonitor.h"
+#include "extras.h"
 
 #include <psapi.h>
 #include <tlhelp32.h>
