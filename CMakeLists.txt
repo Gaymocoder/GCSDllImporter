@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 project(GCSDllImporter)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_compile_options(-Wall)
 
 set(CMAKE_CXX_STANDART 17)
