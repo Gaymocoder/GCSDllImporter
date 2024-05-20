@@ -21,7 +21,10 @@ bool checkPtr(T* &ptr, bool &malloced)
     return true;
 }
 
-void PressEnter();
+void normalizePath(FS::path &path);
+
 bool isProcessActive(HANDLE process);
+
+void PressEnter();
 
 #endif
