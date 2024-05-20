@@ -2,43 +2,40 @@
 
 #include <algorithm>
 
-/*
-
-"C:/System32/*" -> ""
-"*\Qt\?\?\plugins\?\?" -> "./?3/?4"
-
-*/
-
-FS::path::iterator operator + (FS::path::iterator it, uint32_t steps)
+PathIterator operator + (PathIterator it, uint32_t steps)
 {
     for(; steps > 0; --steps)
         ++it;
     return it;
 }
 
-bool maskMatch(const FS::path &mask, uint16_t maskStart, const FS::path &path, uint16_t pathStart)
+bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt)
 {
-    uint16_t maskLength = std::distance(mask.begin(), mask.end());
-    uint16_t pathLength = std::distance(path.begin(), path.end());
-
-    for(uint16_t i = maskStart, ii = pathStart; i < maskLength && ii < pathLength; ++i, ++ii)
+    for(; maskIt != mask.end() && pathIt != path.end(); ++maskIt, ++pathIt)
     {
-        if ((mask.begin() + i)->string() == "?")
+        if (maskIt->string() == "?")
             continue;
 
-        if ((mask.begin() + i)->string() == "*")
+        if (maskIt->string() == "*")
         {
-            if (mask.begin() + i + 1 == mask.end())
+            if (++maskIt == mask.end())
                 return true;
+            --maskIt;
 
-            for(uint16_t iii = ii; iii < pathLength; ++iii)
-                if (maskMatch(mask, i+1, path, iii)) return true;
+            for(PathIterator checkPathIt = pathIt; checkPathIt != path.end(); ++checkPathIt)
+            {
+                if (maskMatch(mask, ++maskIt, path, checkPathIt)) return true;
+                --maskIt;
+            }
+
             return false;
         }
 
-        if ((mask.begin() + i)->string() != (path.begin() + ii)->string())
+        if (maskIt->string() != pathIt->string())
             return false;
     }
+
+    return true;
 }
 
 bool parseInstructions(FILE* file, std::vector <FS::path> &instructions)

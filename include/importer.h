@@ -3,9 +3,11 @@
 
 #include "extras.h"
 
-FS::path::iterator operator + (FS::path::iterator it, uint32_t steps);
+typedef FS::path::iterator PathIterator;
 
-bool maskMatch(const FS::path &mask, uint16_t maskStart, const FS::path &path, uint16_t pathStart);
+PathIterator operator + (PathIterator it, uint32_t steps);
+
+bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt);
 bool parseInstructions(FILE* file, std::vector <FS::path> &instructions);
 
 #endif
