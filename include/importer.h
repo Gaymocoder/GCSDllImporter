@@ -5,9 +5,8 @@
 
 typedef FS::path::iterator PathIterator;
 
-PathIterator operator + (PathIterator it, uint32_t steps);
-
-bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt);
 bool parseInstructions(FILE* file, std::vector <FS::path> &instructions);
+bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &instructs);
+bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt);
 
 #endif
