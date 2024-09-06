@@ -43,7 +43,7 @@ bool maskMatch(FS::path &mask, PathIterator maskIt, FS::path &path, PathIterator
 bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &instructs)
 {
     uint8_t flags = 0;
-    const uint8_t QUOTE_ON    = 1;
+    const uint8_t QUOTE_ON = 1;
     const uint8_t SOURCE_PATH = 2;
 
     size_t arrowPos = instruct.find("->");
@@ -77,6 +77,6 @@ bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &ins
 }
 
 
-bool parseInstructs(FILE* file, std::vector <FS::path> &instructions)
+bool parseInstructs(FILE* file, std::vector <FS::path> &instructs)
 {
 }

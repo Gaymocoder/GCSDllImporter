@@ -111,7 +111,7 @@ HANDLE waitForStart(const FS::path &exePath)
     bool success = findProcess(exePath.wstring().c_str(), &exeProcess);
     for(; exeProcess == NULL && success; success = findProcess(exePath.wstring().c_str(), &exeProcess))
         std::this_thread::sleep_for(100ms);
-    fprintf(stderr, "The application has been launched with PID%lu. ", GetProcessId(exeProcess));
+    if (success) fprintf(stderr, "The application has been launched with PID%lu. ", GetProcessId(exeProcess));
     return exeProcess;
 }
 
