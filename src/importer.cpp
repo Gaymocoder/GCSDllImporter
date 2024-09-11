@@ -76,7 +76,17 @@ bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &ins
     return true;
 }
 
-
 bool parseInstructs(FILE* file, std::vector <FS::path> &instructs)
 {
+    const uint16_t bufferLength = 500;
+    char* buffer = (char*) malloc (bufferLength);
+
+    while (fgets(buffer, bufferLength, file) != NULL)
+    {
+        std::string instructStr(buffer);
+        parseInstructsLine(instructStr, instructs);
+    }
+
+    free(buffer);
+    return true;
 }
