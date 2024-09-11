@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-bool maskMatch(FS::path &mask, PathIterator maskIt, FS::path &path, PathIterator pathIt, std::vector <std::string> &questions)
+bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt, std::vector <std::string> &questions)
 {
     PathIterator localMaskIt = maskIt;
     PathIterator localPathIt = pathIt;
@@ -89,4 +89,22 @@ bool parseInstructs(FILE* file, std::vector <FS::path> &instructs)
 
     free(buffer);
     return true;
+}
+
+FS::path destinationSetup(const FS::path &destMask, const std::vector <std::string> &questions)
+{
+    FS::path _return = "";
+    for(PathIterator it = destMask.begin(); it != destMask.end(); ++it)
+    {
+        std::string itStr = it->string();
+        if (itStr[0] == '?')
+        {
+            _return /= questions[(int) itStr[1] - 49];
+            continue;
+        }
+        _return /= *it;
+    }
+
+    _return = FS::weakly_canonical(FS::current_path() / _return);
+    return _return;
 }
