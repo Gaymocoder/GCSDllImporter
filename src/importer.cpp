@@ -76,12 +76,12 @@ bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &ins
     return true;
 }
 
-bool parseInstructs(FILE* file, std::vector <FS::path> &instructs)
+bool parseInstructs(FILE* iniFile, std::vector <FS::path> &instructs)
 {
     const uint16_t bufferLength = 500;
     char* buffer = (char*) malloc (bufferLength);
 
-    while (fgets(buffer, bufferLength, file) != NULL)
+    while (fgets(buffer, bufferLength, iniFile) != NULL)
     {
         std::string instructStr(buffer);
         parseInstructsLine(instructStr, instructs);
@@ -107,4 +107,31 @@ FS::path destinationSetup(const FS::path &destMask, const std::vector <std::stri
 
     _return = FS::weakly_canonical(FS::current_path() / _return);
     return _return;
+}
+
+bool getDestinationPath(const FS::path &src, const FS::path &iniFilePath, FS::path &dest)
+{
+    FILE* iniFile = fopen(iniFilePath.string().c_str(), "r");
+    if (!iniFile)
+    {
+        fprintf(stderr, "Error in opening configuration file: %ls\n", iniFilePath.c_str());
+        return false;
+    }
+
+    std::vector <FS::path> instructs = {};
+    parseInstructs(iniFile, instructs);
+    fclose(iniFile);
+
+    for(auto it = instructs.begin(); it != instructs.end(); it += 2)
+    {
+        std::vector <std::string> questions = {};
+        if (maskMatch(*it, it->begin(), src, src.begin(), questions))
+        {
+            dest = destinationSetup(it[1], questions);
+            return true;
+        }
+    }
+
+    dest = FS::path(".");
+    return true;
 }
