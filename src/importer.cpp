@@ -76,12 +76,12 @@ bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &ins
     return true;
 }
 
-bool parseInstructs(FILE* iniFile, std::vector <FS::path> &instructs)
+bool parseInstructs(FILE* configFile, std::vector <FS::path> &instructs)
 {
     const uint16_t bufferLength = 500;
     char* buffer = (char*) malloc (bufferLength);
 
-    while (fgets(buffer, bufferLength, iniFile) != NULL)
+    while (fgets(buffer, bufferLength, configFile) != NULL)
     {
         deleteLeadingSpaces(buffer, strlen(buffer));
         if (*buffer == '\n' || *buffer == '#')
@@ -113,19 +113,8 @@ FS::path destinationSetup(const FS::path &destMask, const std::vector <std::stri
     return _return;
 }
 
-bool getDestinationPath(const FS::path &src, const FS::path &iniFilePath, FS::path &dest)
+bool getDestinationPath(const FS::path &src, const std::vector <FS::path> &instructs, FS::path &dest)
 {
-    FILE* iniFile = fopen(iniFilePath.string().c_str(), "r");
-    if (!iniFile)
-    {
-        fprintf(stderr, "Error in opening configuration file: %ls\n", iniFilePath.c_str());
-        return false;
-    }
-
-    std::vector <FS::path> instructs = {};
-    parseInstructs(iniFile, instructs);
-    fclose(iniFile);
-
     for(auto it = instructs.begin(); it != instructs.end(); it += 2)
     {
         std::vector <std::string> questions = {};
@@ -137,5 +126,33 @@ bool getDestinationPath(const FS::path &src, const FS::path &iniFilePath, FS::pa
     }
 
     dest = FS::path(".");
+    return true;
+}
+
+bool configureImport(const FS::path &configFilePath, std::vector <FS::path> &srcPaths, std::vector <FS::path> &destPaths)
+{
+    FILE* configFile = fopen(configFilePath.string().c_str(), "r");
+    if (!configFile)
+    {
+        fprintf(stderr, "Configure importing error: failed to open config file (%s)\n", configFilePath.string().c_str());
+        return false;
+    }
+
+    std::vector <FS::path> instructs = {};
+    parseInstructs(configFile, instructs);
+    fclose(configFile);
+
+    destPaths.resize(srcPaths.size());
+    for(size_t i = 0; i < srcPaths.size(); ++i)
+    {
+        getDestinationPath(srcPaths[i], instructs, destPaths[i]);
+        if (destPaths[i] == "")
+        {
+            srcPaths.erase(srcPaths.begin() + i);
+            destPaths.erase(destPaths.begin() + i);
+            --i;
+        }
+    }
+
     return true;
 }
