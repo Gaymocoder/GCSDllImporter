@@ -21,7 +21,7 @@ bool checkPtr(T* &ptr, bool &malloced)
     return true;
 }
 
-void deleteLeadingSpaces(char* src, size_t strLength);
+void deleteLeadingSpaces(char* str, size_t strLength);
 
 void normalizePath(FS::path &path);
 

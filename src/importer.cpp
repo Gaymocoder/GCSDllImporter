@@ -83,6 +83,10 @@ bool parseInstructs(FILE* iniFile, std::vector <FS::path> &instructs)
 
     while (fgets(buffer, bufferLength, iniFile) != NULL)
     {
+        deleteLeadingSpaces(buffer, strlen(buffer));
+        if (*buffer == '\n' || *buffer == '#')
+            continue;
+
         std::string instructStr(buffer);
         parseInstructsLine(instructStr, instructs);
     }

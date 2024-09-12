@@ -10,7 +10,7 @@ void deleteLeadingSpaces(char* str, size_t strLength)
     while (str[leadingSpaces] == ' ') ++leadingSpaces;
 
     memmove(str, str + leadingSpaces, strLength - leadingSpaces + 1);
-    str = (char*) realloc(str, strLength - leadingSpaces + 1);
+    str = (char*) realloc (str, strLength - leadingSpaces + 1);
 }
 
 void normalizePath(FS::path &path)
