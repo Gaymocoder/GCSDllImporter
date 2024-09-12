@@ -1,7 +1,17 @@
 #include "extras.h"
 
+#include <memory>
 #include <cstdint>
 #include <iostream>
+
+void deleteLeadingSpaces(char* str, size_t strLength)
+{
+    size_t leadingSpaces = 0;
+    while (str[leadingSpaces] == ' ') ++leadingSpaces;
+
+    memmove(str, str + leadingSpaces, strLength - leadingSpaces + 1);
+    str = (char*) realloc(str, strLength - leadingSpaces + 1);
+}
 
 void normalizePath(FS::path &path)
 {

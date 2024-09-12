@@ -21,6 +21,8 @@ bool checkPtr(T* &ptr, bool &malloced)
     return true;
 }
 
+void deleteLeadingSpaces(char* src, size_t strLength);
+
 void normalizePath(FS::path &path);
 
 bool isProcessActive(HANDLE process);
