@@ -4,6 +4,13 @@
 #include <cstdint>
 #include <iostream>
 
+bool eraseFromEndVector(size_t n, std::vector <std::string> &vec)
+{
+    auto first = vec.begin() + (vec.size() - n);
+    vec.erase(first, vec.end());
+    return false;
+}
+
 void deleteLeadingSpaces(char* str, size_t strLength)
 {
     size_t leadingSpaces = 0;
