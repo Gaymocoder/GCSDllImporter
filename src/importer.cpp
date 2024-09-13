@@ -4,39 +4,48 @@
 
 bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt, std::vector <std::string> &questions)
 {
-    PathIterator localMaskIt = maskIt;
-    PathIterator localPathIt = pathIt;
+    questions.clear();
+    bool brokenFlag = false;
+    size_t questionsCount = 0;
 
     for(; maskIt != mask.end() && pathIt != path.end(); ++maskIt, ++pathIt)
     {
-
         if (maskIt->string() == "*")
         {
             if (++maskIt == mask.end())
+            {
+                brokenFlag = true;
                 break;
+            }
             --maskIt;
 
             for(PathIterator checkPathIt = pathIt; checkPathIt != path.end(); ++checkPathIt)
             {
-                if (maskMatch(mask, ++maskIt, path, checkPathIt, questions)) return true;
+                if (maskMatch(mask, ++maskIt, path, checkPathIt, questions))
+                {
+                    brokenFlag = true;
+                    break;
+                }
                 --maskIt;
             }
 
-            return false;
+            if (brokenFlag) break;
+            return eraseFromEndVector(questionsCount, questions);
         }
 
         if (maskIt->string() == "?")
+        {
+            questions.push_back(pathIt->string());
+            ++questionsCount;
             continue;
+        }
 
         if (maskIt->string() != pathIt->string())
-            return false;
+            return eraseFromEndVector(questionsCount, questions);
     }
 
-    if (pathIt != path.end()) return false;
-
-    for(; localMaskIt != mask.end() && localPathIt != path.end(); ++localMaskIt, ++localPathIt)
-        if (localMaskIt->string() == "?") questions.push_back(localPathIt->string());
-
+    if ((pathIt != path.end() || maskIt != mask.end()) && !brokenFlag)
+        return eraseFromEndVector(questionsCount, questions);
     return true;
 }
 
