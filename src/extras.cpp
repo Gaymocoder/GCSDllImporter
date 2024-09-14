@@ -4,6 +4,18 @@
 #include <cstdint>
 #include <iostream>
 
+#ifdef _WIN32
+    #define WIN true
+#else
+    #define WIN false
+#endif
+
+void setNormalLocale()
+{
+    if (WIN == 1)
+        std::system("chcp 65001 > nul");
+}
+
 bool eraseFromEndVector(size_t n, std::vector <std::string> &vec)
 {
     auto first = vec.begin() + (vec.size() - n);
@@ -36,6 +48,7 @@ bool isProcessActive(HANDLE process)
 
 void PressEnter()
 {
-    fprintf(stdout, "Press Enter to exit ");
-    getchar();
+    char tmp = 'x';
+    printf("Press Enter to exit ");
+    std::cin.get(tmp);
 }
