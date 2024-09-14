@@ -118,23 +118,24 @@ FS::path destinationSetup(const FS::path &destMask, const std::vector <std::stri
         _return /= *it;
     }
 
-    _return = FS::weakly_canonical(FS::current_path() / _return);
+    _return = FS::current_path() / _return;
     return _return;
 }
 
 bool getDestinationPath(const FS::path &src, const std::vector <FS::path> &instructs, FS::path &dest)
 {
+    dest = FS::path(".");
     for(auto it = instructs.begin(); it != instructs.end(); it += 2)
     {
         std::vector <std::string> questions = {};
         if (maskMatch(*it, it->begin(), src, src.begin(), questions))
         {
             dest = destinationSetup(it[1], questions);
-            return true;
+            break;
         }
     }
 
-    dest = FS::path(".");
+    dest = FS::weakly_canonical(dest);
     return true;
 }
 
