@@ -23,4 +23,4 @@ set_property(TARGET GCS.DllImporter PROPERTY CXX_STANDARD_REQUIRED ON)
 
 target_link_libraries(GCS.ResourceMonitor GCS.Extras)
 target_link_libraries(GCS.Importer GCS.Extras)
-target_link_libraries(GCS.DllImporter GCS.Extras GCS.ResourceMonitor)
+target_link_libraries(GCS.DllImporter GCS.Extras GCS.ResourceMonitor GCS.Importer)

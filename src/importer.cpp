@@ -1,6 +1,8 @@
 #include "importer.h"
 
+#include <iostream>
 #include <algorithm>
+#include <iterator>
 
 bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, PathIterator pathIt, std::vector <std::string> &questions)
 {
@@ -40,7 +42,7 @@ bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, 
             continue;
         }
 
-        if (maskIt->string() != pathIt->string())
+        if (*maskIt != *pathIt)
             return eraseFromEndVector(questionsCount, questions);
     }
 
@@ -51,7 +53,7 @@ bool maskMatch(const FS::path &mask, PathIterator maskIt, const FS::path &path, 
 
 bool parseInstructsLine(const std::string &instruct, std::vector <FS::path> &instructs)
 {
-    uint8_t flags = 0;
+    uint8_t flags = 2;
     const uint8_t QUOTE_ON = 1;
     const uint8_t SOURCE_PATH = 2;
 
@@ -89,6 +91,11 @@ bool parseInstructs(FILE* configFile, std::vector <FS::path> &instructs)
 {
     const uint16_t bufferLength = 500;
     char* buffer = (char*) malloc (bufferLength);
+    if (buffer == NULL)
+    {
+        fprintf(stderr, "parseInstructs: failed to allocate memory for \"char* buffer\"\n");
+        return false;
+    }
 
     while (fgets(buffer, bufferLength, configFile) != NULL)
     {
@@ -106,6 +113,8 @@ bool parseInstructs(FILE* configFile, std::vector <FS::path> &instructs)
 
 FS::path destinationSetup(const FS::path &destMask, const std::vector <std::string> &questions)
 {
+    if (destMask == "") return "";
+
     FS::path _return = "";
     for(PathIterator it = destMask.begin(); it != destMask.end(); ++it)
     {
@@ -124,11 +133,13 @@ FS::path destinationSetup(const FS::path &destMask, const std::vector <std::stri
 
 bool getDestinationPath(const FS::path &src, const std::vector <FS::path> &instructs, FS::path &dest)
 {
-    dest = FS::path(".");
+    dest = FS::path(".") / src.filename();
     for(auto it = instructs.begin(); it != instructs.end(); it += 2)
     {
         std::vector <std::string> questions = {};
-        if (maskMatch(*it, it->begin(), src, src.begin(), questions))
+        FS::path lowerCaseMask = toLower(*it);
+        FS::path lowerCaseSrc = toLower(src);
+        if (maskMatch(lowerCaseMask, lowerCaseMask.begin(), lowerCaseSrc, lowerCaseSrc.begin(), questions))
         {
             dest = destinationSetup(it[1], questions);
             break;

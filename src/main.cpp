@@ -1,4 +1,5 @@
 #include "resourceMonitor.h"
+#include "importer.h"
 #include "extras.h"
 
 #include <locale>
@@ -28,11 +29,22 @@ int main(int argc, char** argv)
     }
 
     HANDLE exeProcess = waitForStart(fullAppPath);
-    if (exeProcess == NULL) return 4;
+    if (exeProcess == NULL)
+        return 4;
 
-    std::vector <FS::path> modules;
-    if (!trackProcessModules(exeProcess, &modules)) return 5;
+    std::vector <FS::path> modulesSrcPaths;
+    if (!trackProcessModules(exeProcess, &modulesSrcPaths))
+        return 5;
     CloseHandle(exeProcess);
+
+    std::vector <FS::path> modulesImportPaths;
+    const FS::path configFilePath = FS::weakly_canonical("./config.ini");
+    if (!configureImport(configFilePath, modulesSrcPaths, modulesImportPaths))
+        return 6;
+
+    fprintf(stderr, "Modules to import:\n");
+    for(size_t i = 0, modulesCount = modulesSrcPaths.size(); i < modulesCount; ++i)
+        fprintf(stderr, "%-125s -> %s\n", modulesSrcPaths[i].string().c_str(), modulesImportPaths[i].string().c_str());
 
     PressEnter();
 }

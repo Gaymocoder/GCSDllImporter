@@ -23,6 +23,8 @@ bool checkPtr(T* &ptr, bool &malloced)
 
 void setNormalLocale();
 
+FS::path toLower(const FS::path &path);
+
 bool eraseFromEndVector(size_t n, std::vector <std::string> &vec);
 
 void deleteLeadingSpaces(char* str, size_t strLength);
