@@ -6,7 +6,7 @@
 
 int main(int argc, char** argv)
 {
-    setlocale(LC_ALL, "");
+    setNormalLocale();
     wchar_t** wargv = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (argc < 2)
     {
@@ -14,12 +14,8 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    FS::path fullAppPath = FS::path();
-    try
-    {
-        fullAppPath = FS::canonical(FS::path(wargv[1]));
-    }
-    catch(FS::filesystem_error &err)
+    FS::path fullAppPath = FS::weakly_canonical(FS::path(wargv[1]));
+    if (!FS::exists(fullAppPath))
     {
         fprintf(stderr, "Invalid path has been requested:\nFile \"%ls\" not found\n", fullAppPath.wstring().c_str());
         return 2;
