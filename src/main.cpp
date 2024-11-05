@@ -58,6 +58,24 @@ int main(int argc, char** argv)
         return 0;
     }
 
+    fprintf(stdout, "\nImport enumerated modules? ");
+    if (!confirmRequest())
+    {
+        fprintf(stderr, "The import has been canceled. ");
+        PressEnter();
+        return 0;
+    }
+
+    std::error_code err; err.clear();
+    size_t succeedCount = 0;
+    for(size_t i = 0, modulesCount = modulesSrcPaths.size(); i < modulesCount; ++i)
+    {
+        FS::create_directories(modulesImportPaths[i].remove_filename());
+        FS::copy(modulesSrcPaths[i], modulesImportPaths[i], err);
+        if (err.value() == 0) ++succeedCount;
+    }
+
+    fprintf(stderr, "%llu dll-s have been imported successfully. ", succeedCount);
     PressEnter();
     return 0;
 }

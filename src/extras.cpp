@@ -81,6 +81,15 @@ bool isProcessActive(HANDLE process)
     return (WaitForSingleObject(process, 0) == WAIT_TIMEOUT);
 }
 
+bool confirmRequest()
+{
+    char confirm = 'x';
+    printf("y/n (or just press enter to confirm action) ");
+    scanf(" %c", &confirm);
+
+    return (confirm == 'y');
+}
+
 void PressEnter()
 {
     char tmp = 'x';
