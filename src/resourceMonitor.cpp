@@ -50,7 +50,7 @@ std::vector <FS::path> getProcessModules(const HANDLE &process)
             continue;
         }
 
-        modulePath = (wchar_t*) realloc(modulePath, (pathSize + 1) *sizeof(wchar_t));
+        modulePath = (wchar_t*) realloc(modulePath, (pathSize + 1) * sizeof(wchar_t));
         _return.push_back(FS::path(modulePath));
         free(modulePath);
     }

@@ -25,6 +25,8 @@ void setNormalLocale();
 
 FS::path toLower(const FS::path &path);
 
+FS::path getCurrentExeDir();
+
 bool eraseFromEndVector(size_t n, std::vector <std::string> &vec);
 
 void deleteLeadingSpaces(char* str, size_t strLength);
@@ -32,6 +34,8 @@ void deleteLeadingSpaces(char* str, size_t strLength);
 void normalizePath(FS::path &path);
 
 bool isProcessActive(HANDLE process);
+
+bool confirmRequest();
 
 void PressEnter();
 

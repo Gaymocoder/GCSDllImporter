@@ -1,5 +1,7 @@
 #include "extras.h"
 
+#include <libloaderapi.h>
+
 #include <memory>
 #include <locale>
 #include <cstdint>
@@ -28,6 +30,23 @@ FS::path toLower(const FS::path &path)
         _return /= strElement;
     }
     return _return;
+}
+
+FS::path getCurrentExeDir()
+{
+    wchar_t* exePath = (wchar_t*) malloc (sizeof(wchar_t) * (MAX_PATH+1));
+    DWORD pathLength = GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    if (pathLength == 0)
+    {
+        fprintf(stderr, "Failed to get directory of current executable file: error code %lu", GetLastError());
+        free(exePath);
+        return FS::path("");
+    }
+
+    FS::path _return(exePath);
+    free(exePath);
+
+    return _return.remove_filename();
 }
 
 bool eraseFromEndVector(size_t n, std::vector <std::string> &vec)
